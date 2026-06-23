@@ -119,9 +119,7 @@ cp .env.example .env
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
-### 4. Запуск
-
-**Веб-интерфейс:**
+### 4. Запуск локально
 
 ```bash
 python3 jarvis_app.py
@@ -129,11 +127,35 @@ python3 jarvis_app.py
 
 Откроется `http://127.0.0.1:5050`
 
-**Консольный терминал:**
+Консольный режим: `python3 main.py`
 
-```bash
-python3 main.py
-```
+---
+
+## Деплой (работает в интернете)
+
+ZamanAI использует два слоя:
+
+| Слой | Где | URL |
+|------|-----|-----|
+| Фронтенд | GitHub Pages | https://baelaslanbekow.github.io/zamanai/ |
+| Бэкенд (API + AGI) | Render (бесплатно) | https://zamanai.onrender.com |
+
+### Шаг 1 — GitHub Pages (автоматически)
+
+При каждом `push` в `main` GitHub Actions публикует сайт на Pages.
+
+### Шаг 2 — Render (один раз, 2 минуты)
+
+1. Нажмите кнопку:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/baelaslanbekow/zamanai)
+
+2. В Render добавьте переменную **`GROQ_API_KEY`** (ваш ключ с [console.groq.com](https://console.groq.com))
+3. Нажмите **Deploy**
+
+После деплоя сайт на GitHub Pages будет отправлять запросы на `https://zamanai.onrender.com`.
+
+> Render free tier «засыпает» после 15 мин бездействия — первый запрос может занять ~30 сек.
 
 ---
 

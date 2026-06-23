@@ -209,3 +209,6 @@ async def chat_stream(body: ChatRequest) -> StreamingResponse:
 
 if WEB_ROOT.exists():
     app.mount("/static", StaticFiles(directory=WEB_ROOT), name="static")
+    app.mount("/css", StaticFiles(directory=WEB_ROOT / "css"), name="css")
+    app.mount("/js", StaticFiles(directory=WEB_ROOT / "js"), name="js")
+    app.mount("/assets", StaticFiles(directory=WEB_ROOT / "assets"), name="assets")
