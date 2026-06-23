@@ -2,7 +2,7 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.1-8b-instant";
 
 function getGroqKey() {
-  return localStorage.getItem("zaman_groq_key") || "";
+  return localStorage.getItem("zaman_groq_key") || window.GROQ_DEFAULT_KEY || "";
 }
 
 function setGroqKey(key) {

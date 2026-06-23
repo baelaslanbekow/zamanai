@@ -385,7 +385,7 @@ function bindEvents() {
 function initGithubPages() {
   if (!window.IS_GITHUB_PAGES) return;
   const note = $("#footerNote");
-  if (note) {
+  if (note && !getGroqKey()) {
     note.textContent = "Режим GitHub Pages — нужен бесплатный ключ с console.groq.com (сохраняется в браузере).";
   }
   if (!getGroqKey()) showKeyModal();
