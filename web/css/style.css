@@ -765,6 +765,74 @@ body.agi-active .btn-send {
 
 .hidden { display: none !important; }
 
+.key-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+}
+.key-modal-box {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-lg);
+}
+.key-modal-box h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.key-modal-box p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.key-modal-box p a { color: var(--blue); }
+.key-modal-box input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  margin-bottom: 14px;
+  outline: none;
+}
+.key-modal-box input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
+.key-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.btn-key-save, .btn-key-cancel {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-key-save {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-key-cancel {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+
 @media (min-width: 600px) {
   :root {
     --shell-pad: 20px;

@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png?v=1" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/logo.png?v=1" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png?v=1" />
-  <link rel="stylesheet" href="css/style.css?v=7" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
 </head>
 <body>
   <div class="ambient" aria-hidden="true">
@@ -119,8 +119,21 @@
     </footer>
   </div>
 
-  <script src="js/config.js?v=1"></script>
+  <div class="key-modal hidden" id="keyModal">
+    <div class="key-modal-box">
+      <h3>Groq API ключ</h3>
+      <p>Для работы на GitHub Pages нужен ваш ключ с <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Ключ хранится только в вашем браузере.</p>
+      <input type="password" id="groqKeyInput" placeholder="gsk_..." autocomplete="off" />
+      <div class="key-modal-actions">
+        <button type="button" class="btn-key-save" id="saveKeyBtn">Сохранить</button>
+        <button type="button" class="btn-key-cancel" id="cancelKeyBtn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js?v=3"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/groq-browser.js?v=2"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>

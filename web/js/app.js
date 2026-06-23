@@ -15,6 +15,10 @@ const els = {
   modeSubtitle: $("#modeSubtitle"),
   showThoughts: $("#showThoughts"),
   newChat: $("#newChatBtn"),
+  keyModal: $("#keyModal"),
+  keyInput: $("#groqKeyInput"),
+  saveKey: $("#saveKeyBtn"),
+  cancelKey: $("#cancelKeyBtn"),
 };
 
 const MODES = {
@@ -26,6 +30,7 @@ const state = {
   history: [],
   busy: false,
   model: "llm",
+  pendingMessage: null,
 };
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -141,6 +146,15 @@ function addStage(text) {
   els.thinkingProgress.style.width = `${Math.min(95, els.thinkingStages.children.length * 8)}%`;
 }
 
+function showKeyModal() {
+  els.keyModal?.classList.remove("hidden");
+  els.keyInput?.focus();
+}
+
+function hideKeyModal() {
+  els.keyModal?.classList.add("hidden");
+}
+
 function parseSseChunk(chunk) {
   const events = [];
   for (const part of chunk.split("\n\n")) {
@@ -169,6 +183,84 @@ async function readStream(response, onEvent) {
   }
 }
 
+function friendlyError(err) {
+  const msg = String(err?.message || err || "");
+  if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+    return "Нет связи с сервером. Проверьте интернет или введите Groq API ключ.";
+  }
+  return msg;
+}
+
+async function serverAvailable() {
+  if (!window.API_BASE) return false;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch(`${window.API_BASE}/api/health`, { signal: ctrl.signal });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function shouldUseServer() {
+  if (!window.API_BASE) return !window.IS_GITHUB_PAGES;
+  if (!window.IS_GITHUB_PAGES) return true;
+  if (window._serverOk == null) window._serverOk = await serverAvailable();
+  return window._serverOk;
+}
+
+async function sendViaServer(message, model) {
+  let result = null;
+  const res = await fetch(`${window.API_BASE || ""}/api/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message,
+      model,
+      history: state.history.slice(0, -1),
+      show_thoughts: els.showThoughts.checked,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Ошибка ${res.status}`);
+  }
+  await readStream(res, ({ event, data }) => {
+    if (event === "stage") {
+      hideTyping();
+      addStage(data.text);
+    } else if (event === "status") {
+      setStatus(data.text, true);
+    } else if (event === "done") {
+      result = data;
+    } else if (event === "error") {
+      throw new Error(data.message);
+    }
+  });
+  return result;
+}
+
+async function sendViaBrowser(message, model) {
+  const key = getGroqKey();
+  if (!key) {
+    state.pendingMessage = message;
+    showKeyModal();
+    throw new Error("Введите Groq API ключ");
+  }
+  hideTyping();
+  if (model === "agi") {
+    setStatus("AGI думает", true);
+    return groqAGI(key, message, (stage) => {
+      hideTyping();
+      addStage(stage);
+    });
+  }
+  const response = await groqLLM(key, message, state.history.slice(0, -1));
+  return { model: "llm", response, confidence: null, thoughts: null };
+}
+
 async function sendMessage(text) {
   const message = text.trim();
   if (state.busy || !message) return;
@@ -188,35 +280,24 @@ async function sendMessage(text) {
 
   let result = null;
   try {
-    const res = await fetch(`${window.API_BASE || ""}/api/chat/stream`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message,
-        model,
-        history: state.history.slice(0, -1),
-        show_thoughts: els.showThoughts.checked,
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `Ошибка ${res.status}`);
+    if (await shouldUseServer()) {
+      result = await sendViaServer(message, model);
+    } else {
+      result = await sendViaBrowser(message, model);
     }
-
-    await readStream(res, ({ event, data }) => {
-      if (event === "stage") {
-        hideTyping();
-        addStage(data.text);
-      } else if (event === "status") {
-        setStatus(data.text, true);
-      } else if (event === "done") {
-        result = data;
-      } else if (event === "error") {
-        throw new Error(data.message);
-      }
-    });
   } catch (err) {
-    createMessage("assistant", `Ошибка: ${err.message}`, { model });
+    if (await shouldUseServer()) {
+      window._serverOk = false;
+      try {
+        result = await sendViaBrowser(message, model);
+      } catch (browserErr) {
+        if (browserErr.message !== "Введите Groq API ключ") {
+          createMessage("assistant", `Ошибка: ${friendlyError(browserErr)}`, { model });
+        }
+      }
+    } else if (err.message !== "Введите Groq API ключ") {
+      createMessage("assistant", `Ошибка: ${friendlyError(err)}`, { model });
+    }
   }
 
   hideTyping();
@@ -229,6 +310,7 @@ async function sendMessage(text) {
   setStatus("Готов");
   state.busy = false;
   els.send.disabled = false;
+  if (!els.keyModal?.classList.contains("hidden")) return;
   els.input.focus();
 }
 
@@ -279,9 +361,38 @@ function bindEvents() {
     });
   });
   els.newChat.addEventListener("click", resetChat);
+  els.saveKey?.addEventListener("click", () => {
+    const key = els.keyInput?.value.trim();
+    if (!key) return;
+    setGroqKey(key);
+    hideKeyModal();
+    if (state.pendingMessage) {
+      const msg = state.pendingMessage;
+      state.pendingMessage = null;
+      sendMessage(msg);
+    }
+  });
+  els.cancelKey?.addEventListener("click", () => {
+    state.pendingMessage = null;
+    hideKeyModal();
+    state.busy = false;
+    els.send.disabled = false;
+    hideTyping();
+    setStatus("Готов");
+  });
+}
+
+function initGithubPages() {
+  if (!window.IS_GITHUB_PAGES) return;
+  const note = $("#footerNote");
+  if (note) {
+    note.textContent = "Режим GitHub Pages — нужен бесплатный ключ с console.groq.com (сохраняется в браузере).";
+  }
+  if (!getGroqKey()) showKeyModal();
 }
 
 setModel("llm");
 bindEvents();
 setupViewport();
+initGithubPages();
 if (!/iPhone|iPad|Android/i.test(navigator.userAgent)) els.input.focus();
