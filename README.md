@@ -213,7 +213,7 @@ ZamanAI использует два слоя:
 
 - GitHub: [@baelaslanbekow](https://github.com/baelaslanbekow)
 - Портфолио: [baelaslanbekow.github.io/portfolio-2026](https://baelaslanbekow.github.io/portfolio-2026/)
-- Telegram: [@as1anbekow](https://t.me/kyrgyz4)
+- Telegram: [@kyrgyz4](https://t.me/kyrgyz4)
 
 ---
 
